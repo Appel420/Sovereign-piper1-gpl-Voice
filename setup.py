@@ -90,12 +90,12 @@ setup(
             "librosa<1",
         ],
         "dev": [
-            "black==24.8.0",
+            "black==26.3.1",
             "flake8==7.1.1",
             "isort==5.13.2",  # used by script/lint and script/format
             "mypy==1.14.0",
             "pylint==3.2.7",
-            "pytest==8.3.4",
+            "pytest==9.0.3",
             "build==1.2.2",
             "scikit-build<1",
             "cmake>=3.18,<4",
