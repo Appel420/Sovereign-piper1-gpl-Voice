@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased
+
+- Resolve renamed voices in `piper.download_voices` using the `aliases` list in voices.json
+    - A voice that has been renamed keeps its old name in the `aliases` list of its voices.json entry, but nothing honored it: the downloader builds its URL from the voice name alone and never reads voices.json, so every pre-1.0 name (`de-karlsson-low`, `zh-cn-huayan-x-low`, ...) failed - those names do not even match the `<language>-<name>-<quality>` pattern, so they raised before any download was attempted
+    - A name that does not parse, or that parses but 404s, is now looked up in the `aliases` lists and downloaded under its current name, with a warning saying what it was renamed to
+    - voices.json is only downloaded when a name actually has to be resolved, so a current name still costs the same two requests it always did
+- Add Lithuanian phonemizer using espeak-ng plus a pitch accent dictionary
+    - `--data.phoneme_type lithuanian` for training; `"phoneme_type": "lithuanian"` in a voice config for synthesis
+    - espeak-ng's Lithuanian voice phonemizes well but places stress incorrectly in roughly half of the words, and it cannot express the three Lithuanian pitch accents at all: it collapses them into one primary-stress mark, so kártas ("a time") and kar̃tas ("bitter") come out identical
+    - The phonemizer keeps espeak-ng as the phoneme source and moves the stress mark to the accented syllable using a dictionary built from the LIEPA corpus and the g2p-lt-lexicon, both CC-BY-4.0; words that are missing keep espeak-ng's own placement
+    - Accents reuse ˈ and ˌ and add ˋ (U+02CB) - one symbol appended to the default IPA map, so Lithuanian voices stay compatible with the IPA-based (espeak) warmstart
+    - The stress dictionary (3 MB, CC-BY-4.0) and the letter-name table ship with piper as package data, like the Hebrew model: pip install, download the voice, it works - no extra files and no new dependency; a voice may pass its own files to `LithuanianPhonemizer` instead
+    - Lithuanian also has a vocative case spelled like the nominative but accented differently (mamà "mother" vs mãma "mum!"); a dictionary holding one entry per spelling cannot express it, so a short list of nouns that occur as address ships alongside, and a word on that list fenced off by commas is accented on the first syllable
+    - The shipped letter-name table also separates z and ž, which espeak-ng names identically (ʑˈee), so the initials of "Zigmas" and "Žygimantas" are no longer read the same, and names Š "šė" rather than "eš"
+
+## 1.8.0
+
+- Add Thai phonemizer using TLTK in the new `th` extra
+    - `--data.phoneme_type thai` for training; `"phoneme_type": "thai"` in a voice config for synthesis
+    - espeak-ng's Thai voice is a placeholder: its `th_dict` holds no lexicon, so unspaced Thai is never segmented; the leading vowels เ แ โ ใ ไ are not reordered; and a tone mark deletes the syllable's vowel, collapsing ป่า/ป้า/ป๊า/ป๋า to the same phonemes
+    - TLTK does dictionary-based word segmentation and emits a tone digit (1-5) per syllable, in the same style `phonemize_chinese` uses for Mandarin tones
+    - The whole inventory already has ids in the default IPA map, so Thai voices stay compatible with the IPA-based (espeak) warmstart
+- Add `script/setup --th`, and install the `th` extra in CI so the Thai tests run
+
 ## 1.7.0
 
 - Add Japanese phonemizer using OpenJTalk (`pyopenjtalk-plus`) in the new `ja` extra
